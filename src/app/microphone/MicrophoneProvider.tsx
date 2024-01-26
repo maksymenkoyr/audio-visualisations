@@ -1,22 +1,28 @@
 'use client'
-import { createContext, useEffect, useState } from 'react'
+import { Dispatch, SetStateAction, createContext, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 // import MicrophonePermissionRequested from '../components/modals/MicrophonePermissionRequested'
 // import MicrophonePermissionDenied from '../components/modals/MicrophonePermissionDenied'
 
 type microphoneState = {
   analyser: AnalyserNode | null
+  setGain?: Dispatch<SetStateAction<number>>
 }
 
 type microphoneContext = {
   analyser: AnalyserNode
+  setGain: Dispatch<SetStateAction<number>>
 }
 
 export const MicrophoneContext = createContext<microphoneContext | null>(null)
 
 export function MicrophoneProvider({ children }: { children: React.ReactNode }) {
-  
-  const [microphoneState, setMicrophoneState] = useState<microphoneState>({ analyser: null })
+  const [gain, setGain] = useState<number>(1)
+  const [microphoneState, setMicrophoneState] = useState<microphoneState>({
+    analyser: null,
+    setGain,
+  })
+  console.log(gain)
   // let analyser: AnalyserNode2
   useEffect(() => {
     navigator.mediaDevices
@@ -29,16 +35,13 @@ export function MicrophoneProvider({ children }: { children: React.ReactNode }) 
         const gainNode = audioCtx.createGain()
         gainNode.connect(analyser)
         audioSrc.connect(gainNode)
-        gainNode.gain.value = 10
-        console.log(gainNode.gain)
-        setMicrophoneState({
-          analyser: analyser,
-        })
+        gainNode.gain.value = gain
+        setMicrophoneState({ analyser, setGain })
       })
       .catch(err => {
         console.log(err)
       })
-  }, [])
+  }, [gain])
   return (
     <MicrophoneContext.Provider value={microphoneState as microphoneContext}>
       {microphoneState.analyser === null && <div>loading...</div>}
